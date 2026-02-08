@@ -196,12 +196,30 @@ function Index() {
             className="z-10 flex flex-col items-center gap-8 text-center"
           >
             <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: [0, 1.2, 1], rotate: [0, 15, -15, 0] }}
-              transition={{ duration: 0.6, type: "spring" }}
-              className="text-[10rem] md:text-[15rem] drop-shadow-2xl"
+              initial={{ scale: 0, rotate: -10 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ 
+                type: "spring",
+                stiffness: 260,
+                damping: 20,
+                delay: 0.1
+              }}
+              className="relative group"
             >
-              😻
+              <div className="absolute -inset-4 bg-gradient-to-tr from-[#ff4d6d] to-[#ffb3c1] rounded-[2rem] blur-2xl opacity-30 group-hover:opacity-50 transition duration-500"></div>
+              <motion.div 
+                whileHover={{ scale: 1.05, rotate: 2 }}
+                className="relative bg-white p-4 rounded-[2rem] shadow-2xl border-8 border-white overflow-hidden max-w-[300px] md:max-w-[400px]"
+              >
+                <img 
+                  src="./2939ede1-9fcb-4e67-8890-119ae8854f8d.jpeg" 
+                  alt="Valentine" 
+                  className="w-full h-auto rounded-[1.2rem] object-cover"
+                />
+                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-lg">
+                  <span className="text-2xl">❤️</span>
+                </div>
+              </motion.div>
             </motion.div>
             
             <motion.h1 
