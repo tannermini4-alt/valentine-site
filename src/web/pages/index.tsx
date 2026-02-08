@@ -16,33 +16,36 @@ function Index() {
   const moveNoButton = useCallback(() => {
     if (!isClient) return;
     
-    // Calculate a random position that is somewhat far from the current center
-    // but within the viewport
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
+    // Increase randomness and range
+    const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1000;
+    const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
     
-    // Using 30% to 40% of viewport width/height as range
-    const rangeX = viewportWidth * 0.4;
-    const rangeY = viewportHeight * 0.4;
+    // Use a wider range for the jump
+    const rangeX = viewportWidth * 0.7;
+    const rangeY = viewportHeight * 0.7;
     
-    const randomX = (Math.random() - 0.5) * rangeX * 2;
-    const randomY = (Math.random() - 0.5) * rangeY * 2;
+    // Generate a position that's likely far from the current one
+    const randomX = (Math.random() - 0.5) * rangeX;
+    const randomY = (Math.random() - 0.5) * rangeY;
     
     setNoPosition({ x: randomX, y: randomY });
     
-    // Shrink "No" button slightly each time, but not too much
-    setNoScale(prev => Math.max(prev * 0.92, 0.6));
+    // Shrink "No" button slightly each time
+    setNoScale(prev => Math.max(prev * 0.9, 0.5));
     
-    // Grow "Yes" button each time "No" is clicked
-    setYesScale(prev => Math.min(prev * 1.12, 2.5));
+    // Grow "Yes" button significantly each time "No" is interacted with
+    setYesScale(prev => Math.min(prev + 0.15, 3.5));
   }, [isClient]);
 
   if (!isClient) return null;
 
   return (
     <div className="min-h-screen bg-[#fff0f3] flex flex-col items-center justify-center p-4 overflow-hidden relative font-sans selection:bg-[#ffb3c1] selection:text-[#ff4d6d]">
+      <div className="absolute inset-0 z-0 opacity-30 pointer-events-none" style={{ backgroundImage: `radial-gradient(#ff4d6d 0.5px, transparent 0.5px)`, backgroundSize: '24px 24px' }}></div>
+      <div className="absolute inset-0 z-0 opacity-20 pointer-events-none bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#ffccd5] via-transparent to-transparent"></div>
+      
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Playfair+Display:ital,wght@0,700;1,700&family=Dancing+Script:wght@700&display=swap');
         
         .font-playfair {
           font-family: 'Playfair Display', serif;
@@ -51,11 +54,15 @@ function Index() {
         .font-montserrat {
           font-family: 'Montserrat', sans-serif;
         }
+
+        .font-dancing {
+          font-family: 'Dancing Script', cursive;
+        }
       `}</style>
 
       {/* Background Hearts */}
       <div className="absolute inset-0 pointer-events-none opacity-20">
-        {[...Array(15)].map((_, i) => (
+        {[...Array(20)].map((_, i) => (
           <motion.div
             key={i}
             initial={{ y: -100, x: Math.random() * 100 + "%", rotate: 0 }}
@@ -72,7 +79,7 @@ function Index() {
             }}
             className="absolute text-red-400 text-3xl"
           >
-            {i % 2 === 0 ? "❤️" : "💖"}
+            {i % 3 === 0 ? "❤️" : i % 3 === 1 ? "💖" : "💕"}
           </motion.div>
         ))}
       </div>
@@ -88,24 +95,24 @@ function Index() {
           >
             <motion.div
               animate={{ 
-                scale: [1, 1.1, 1],
-                rotate: [0, 5, -5, 0]
+                scale: [1, 1.15, 1],
+                rotate: [0, 10, -10, 0]
               }}
               transition={{ 
-                duration: 2.5, 
+                duration: 2, 
                 repeat: Infinity, 
                 ease: "easeInOut" 
               }}
-              className="text-8xl md:text-9xl mb-4 drop-shadow-lg"
+              className="text-8xl md:text-9xl mb-4 drop-shadow-xl"
             >
-              💝
+              ❤️‍🔥
             </motion.div>
             
-            <h1 className="font-playfair text-[clamp(2.2rem,9vw,5.5rem)] font-bold text-[#ff4d6d] leading-[1.1] max-w-4xl drop-shadow-sm px-4">
+            <h1 className="font-playfair text-[clamp(2.5rem,10vw,6rem)] font-bold text-[#ff4d6d] leading-[1.1] max-w-4xl drop-shadow-sm px-4">
               Ты будешь моей валентинкой ?❤️
             </h1>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-8 min-h-[140px] relative w-full px-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-12 min-h-[200px] relative w-full px-4">
               <motion.div
                 style={{ scale: yesScale }}
                 transition={{ type: "spring", stiffness: 400, damping: 17 }}
@@ -114,23 +121,29 @@ function Index() {
                 <Button
                   onClick={() => setIsYes(true)}
                   size="lg"
-                  className="h-auto bg-[#ff4d6d] hover:bg-[#ff758f] text-white px-12 py-8 text-3xl sm:text-4xl rounded-full shadow-2xl transition-all font-montserrat font-black uppercase tracking-wider active:scale-95 border-none"
+                  className="h-auto bg-[#ff4d6d] hover:bg-[#ff758f] text-white px-16 py-8 text-4xl sm:text-5xl rounded-full shadow-[0_20px_50px_rgba(255,77,109,0.4)] transition-all font-montserrat font-black uppercase tracking-wider active:scale-90 border-none group"
                 >
-                  Да💋
+                  <span className="group-hover:scale-110 transition-transform inline-block mr-2">Да</span>💋
                 </Button>
               </motion.div>
 
               <motion.div
-                animate={{ x: noPosition.x, y: noPosition.y, scale: noScale }}
-                transition={{ type: "spring", stiffness: 250, damping: 18 }}
+                animate={{ 
+                  x: noPosition.x, 
+                  y: noPosition.y, 
+                  scale: noScale,
+                  rotate: noPosition.x / 10
+                }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 className="z-20 sm:relative absolute"
               >
                 <Button
                   onClick={moveNoButton}
                   onMouseEnter={moveNoButton}
+                  onPointerDown={moveNoButton}
                   variant="outline"
                   size="lg"
-                  className="h-auto border-2 border-[#ff4d6d] text-[#ff4d6d] hover:bg-white/80 px-8 py-6 text-xl rounded-full shadow-lg transition-all font-montserrat font-bold"
+                  className="h-auto border-4 border-[#ff4d6d] text-[#ff4d6d] bg-white/40 backdrop-blur-sm hover:bg-white px-10 py-6 text-2xl rounded-full shadow-lg transition-all font-montserrat font-bold whitespace-nowrap active:opacity-70"
                 >
                   Нет🤔
                 </Button>
