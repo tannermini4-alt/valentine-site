@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 
@@ -8,25 +8,48 @@ function Index() {
   const [noScale, setNoScale] = useState(1);
   const [yesScale, setYesScale] = useState(1);
   const [isClient, setIsClient] = useState(false);
+  const noButtonRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
   const moveNoButton = useCallback(() => {
-    if (!isClient) return;
+    if (!isClient || !noButtonRef.current) return;
     
-    // Increase randomness and range
-    const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1000;
-    const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
     
-    // Use a wider range for the jump
-    const rangeX = viewportWidth * 0.7;
-    const rangeY = viewportHeight * 0.7;
+    const btnRect = noButtonRef.current.getBoundingClientRect();
+    const btnWidth = btnRect.width;
+    const btnHeight = btnRect.height;
+
+    // Get the current translation to calculate the base position
+    const currentX = noPosition.x;
+    const currentY = noPosition.y;
+
+    // Natural position of the element (where it would be with x=0, y=0)
+    const naturalX = btnRect.left - currentX;
+    const naturalY = btnRect.top - currentY;
+
+    // We want: 0 <= naturalX + nextX <= viewportWidth - btnWidth
+    // So: -naturalX <= nextX <= viewportWidth - btnWidth - naturalX
     
-    // Generate a position that's likely far from the current one
-    const randomX = (Math.random() - 0.5) * rangeX;
-    const randomY = (Math.random() - 0.5) * rangeY;
+    const minX = -naturalX + 16; // 16px padding
+    const maxX = viewportWidth - btnWidth - naturalX - 16;
+    const minY = -naturalY + 16;
+    const maxY = viewportHeight - btnHeight - naturalY - 16;
+
+    let randomX, randomY;
+    let distance = 0;
+    let attempts = 0;
+    
+    do {
+      randomX = minX + Math.random() * (maxX - minX);
+      randomY = minY + Math.random() * (maxY - minY);
+      distance = Math.sqrt(Math.pow(randomX - currentX, 2) + Math.pow(randomY - currentY, 2));
+      attempts++;
+    } while (distance < 150 && attempts < 20);
     
     setNoPosition({ x: randomX, y: randomY });
     
@@ -35,7 +58,7 @@ function Index() {
     
     // Grow "Yes" button significantly each time "No" is interacted with
     setYesScale(prev => Math.min(prev + 0.15, 3.5));
-  }, [isClient]);
+  }, [isClient, noPosition]);
 
   if (!isClient) return null;
 
@@ -128,6 +151,7 @@ function Index() {
               </motion.div>
 
               <motion.div
+                ref={noButtonRef}
                 animate={{ 
                   x: noPosition.x, 
                   y: noPosition.y, 
