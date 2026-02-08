@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 
 function Index() {
   const [isYes, setIsYes] = useState(false);
+  const [noClicks, setNoClicks] = useState(0);
+  const [showNoModal, setShowNoModal] = useState(false);
   const [noPosition, setNoPosition] = useState({ x: 0, y: 0 });
   const [hasMoved, setHasMoved] = useState(false);
   const [noScale, setNoScale] = useState(1);
@@ -55,6 +57,22 @@ function Index() {
     setYesScale(prev => Math.min(prev + 0.2, 4.0));
   }, [isClient, hasMoved]);
 
+  const handleNoInteraction = useCallback((isClick: boolean) => {
+    if (isClick) {
+      setNoClicks(prev => {
+        const next = prev + 1;
+        if (next >= 3) {
+          setShowNoModal(true);
+        } else {
+          moveNoButton();
+        }
+        return next;
+      });
+    } else {
+      moveNoButton();
+    }
+  }, [moveNoButton]);
+
   if (!isClient) return null;
 
   return (
@@ -103,7 +121,73 @@ function Index() {
       </div>
 
       <AnimatePresence mode="wait">
-        {!isYes ? (
+        {showNoModal ? (
+          <motion.div
+            key="no-modal"
+            initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
+            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+            exit={{ opacity: 0, scale: 0.8, rotate: 5 }}
+            className="z-50 flex flex-col items-center gap-8 text-center bg-white/90 backdrop-blur-2xl p-8 md:p-12 rounded-[3rem] shadow-[0_30px_100px_rgba(255,77,109,0.3)] border-4 border-[#ffccd5] max-w-2xl mx-4 relative overflow-hidden"
+          >
+            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#ff4d6d] via-[#ffb3c1] to-[#ff4d6d]"></div>
+            
+            <motion.div 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="relative group"
+            >
+              <div className="absolute -inset-4 bg-[#ff4d6d] rounded-3xl blur-2xl opacity-20 group-hover:opacity-40 transition duration-500"></div>
+              <div className="relative w-48 h-48 md:w-64 md:h-64 rounded-3xl overflow-hidden border-8 border-white shadow-2xl rotate-2 group-hover:rotate-0 transition-transform duration-500">
+                <img 
+                  src="./2939ede1-9fcb-4e67-8890-119ae8854f8d.jpeg" 
+                  alt="Wait what" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </motion.div>
+            
+            <h2 className="font-playfair text-[clamp(1.5rem,5vw,2.5rem)] font-bold text-[#ff4d6d] leading-tight drop-shadow-sm">
+              НЕ ПОНЯЛ 🤨, ДУМАЛА ТАК ЛЕГКО ОТ МЕНЯ ОТВЕРТИШЬСЯ, ПОДУМАЙ ЕЩЕ РАЗ НАД ОТВЕТОМ 🤔🤔
+            </h2>
+
+            <Button
+              onClick={() => {
+                setShowNoModal(false);
+                setNoClicks(0);
+                setNoScale(1);
+                setYesScale(1);
+                setHasMoved(false);
+                setNoPosition({ x: 0, y: 0 });
+              }}
+              size="lg"
+              className="h-auto bg-[#ff4d6d] hover:bg-[#ff758f] text-white px-10 py-6 text-2xl rounded-full shadow-xl transition-all font-montserrat font-black uppercase tracking-wider active:scale-95 border-none group relative overflow-hidden"
+            >
+              <span className="relative z-10">Подумать еще раз 🤔</span>
+            </Button>
+
+            <div className="absolute inset-0 pointer-events-none opacity-10">
+              {[...Array(6)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  animate={{ 
+                    y: [0, -20, 0],
+                    x: [0, Math.random() * 20 - 10, 0],
+                    scale: [1, 1.2, 1]
+                  }}
+                  transition={{ duration: 3 + i, repeat: Infinity }}
+                  className="absolute text-2xl"
+                  style={{ 
+                    top: `${Math.random() * 100}%`, 
+                    left: `${Math.random() * 100}%` 
+                  }}
+                >
+                  ❤️
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        ) : !isYes ? (
           <motion.div
             key="question"
             initial={{ opacity: 0, y: 20 }}
@@ -176,9 +260,9 @@ function Index() {
                 className="z-20 sm:relative"
               >
                 <Button
-                  onClick={moveNoButton}
-                  onMouseEnter={moveNoButton}
-                  onPointerDown={moveNoButton}
+                  onClick={() => handleNoInteraction(true)}
+                  onMouseEnter={() => handleNoInteraction(false)}
+                  onPointerDown={() => handleNoInteraction(true)}
                   variant="outline"
                   size="lg"
                   className="h-auto border-4 border-[#ff4d6d] text-[#ff4d6d] bg-white/60 backdrop-blur-md hover:bg-white px-10 py-6 text-2xl rounded-full shadow-xl transition-all font-montserrat font-bold whitespace-nowrap active:opacity-70 group"
@@ -285,6 +369,7 @@ function Index() {
                <Button
                 onClick={() => {
                   setIsYes(false);
+                  setNoClicks(0);
                   setYesScale(1);
                   setNoScale(1);
                   setNoPosition({ x: 0, y: 0 });
