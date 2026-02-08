@@ -1,21 +1,250 @@
-<!doctype html>
-<html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<link rel="icon" type="image/x-icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Runable</title>
-		<meta property="og:image" content="/og-image.png" />
-		<meta property="og:image:width" content="1200" />
-		<meta property="og:image:height" content="630" />
-		<meta property="og:image:type" content="image/png" />
-		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:image" content="/og-image.png" />
-		<script defer src="/runable.js" data-url="https://collector.onedollarstats.com/events"></script>
-	</head>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Валентинка</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-	<body>
-		<div id="root"></div>
-		<script type="module" src="/src/web/main.tsx"></script>
-	</body>
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #fff0f3 0%, #ffb3c1 100%);
+            font-family: 'Arial', sans-serif;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .container {
+            text-align: center;
+            z-index: 10;
+        }
+
+        .emoji {
+            font-size: 60px;
+            margin-bottom: 30px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .question {
+            font-size: 32px;
+            color: #ff4d6d;
+            margin-bottom: 50px;
+            font-weight: bold;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            position: relative;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            font-size: 18px;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            position: relative;
+        }
+
+        .btn-yes {
+            background: linear-gradient(135deg, #ff4d6d, #ff8fab);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 77, 109, 0.4);
+        }
+
+        .btn-yes:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(255, 77, 109, 0.6);
+        }
+
+        .btn-no {
+            background: #ffb3c1;
+            color: #333;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-no:hover {
+            transform: scale(1.05);
+        }
+
+        .success-screen {
+            display: none;
+            text-align: center;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .success-text {
+            font-size: 28px;
+            color: #ff4d6d;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        .success-image {
+            max-width: 300px;
+            width: 100%;
+            border-radius: 20px;
+            border: 5px solid white;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-image {
+            max-width: 200px;
+            width: 100%;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .modal-text {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .btn-think {
+            background: linear-gradient(135deg, #ff4d6d, #ff8fab);
+            color: white;
+            padding: 12px 25px;
+            font-size: 16px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .btn-think:hover {
+            transform: scale(1.05);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="mainScreen">
+        <div class="emoji">❤️</div>
+        <div class="question">Ты будешь моей валентинкой ?❤️</div>
+        <div class="buttons">
+            <button class="btn btn-yes" onclick="handleYes()">Да💋</button>
+            <button class="btn btn-no" id="noBtn" onclick="handleNo()">Нет🤔</button>
+        </div>
+    </div>
+
+    <div class="success-screen" id="successScreen">
+        <div class="success-text">УРАА, Я ОЧЕНЬ СИЛЬНО ТЕБЯ ЛЮБЛЮ ❤️</div>
+        <img src="./2939ede1-9fcb-4e67-8890-119ae8854f8d.jpeg" alt="Фото" class="success-image">
+        <button class="btn btn-yes" onclick="reset()">Попробовать ещё раз</button>
+    </div>
+
+    <div class="modal" id="noModal">
+        <div class="modal-content">
+            <img src="./3d2a3af2-1cc8-477d-a5a0-9b925831e64c.jpeg" alt="Фото" class="modal-image">
+            <div class="modal-text">НЕ ПОНЯЛ 🤨, ДУМАЛА ТАК ЛЕГКО ОТ МЕНЯ ОТВЕРТИШЬСЯ, ПОДУМАЙ ЕЩЕ РАЗ НАД ОТВЕТОМ 🤔🤔</div>
+            <button class="btn-think" onclick="reset()">Подумать еще раз 🤔</button>
+        </div>
+    </div>
+
+    <script>
+        let noClickCount = 0;
+
+        function handleYes() {
+            document.getElementById('mainScreen').classList.add('hidden');
+            document.getElementById('successScreen').style.display = 'block';
+        }
+
+        function handleNo() {
+            noClickCount++;
+            const noBtn = document.getElementById('noBtn');
+            
+            if (noClickCount < 3) {
+                // Первые 2 клика - просто прыгаем
+                moveButton();
+            } else {
+                // 3-й клик - показываем модальное окно
+                document.getElementById('noModal').classList.add('show');
+            }
+        }
+
+        function moveButton() {
+            const noBtn = document.getElementById('noBtn');
+            const randomX = Math.random() * (window.innerWidth - 150);
+            const randomY = Math.random() * (window.innerHeight - 50);
+            
+            noBtn.style.position = 'fixed';
+            noBtn.style.left = randomX + 'px';
+            noBtn.style.top = randomY + 'px';
+        }
+
+        function reset() {
+            noClickCount = 0;
+            document.getElementById('mainScreen').classList.remove('hidden');
+            document.getElementById('successScreen').style.display = 'none';
+            document.getElementById('noModal').classList.remove('show');
+            
+            const noBtn = document.getElementById('noBtn');
+            noBtn.style.position = 'relative';
+            noBtn.style.left = '0';
+            noBtn.style.top = '0';
+        }
+    </script>
+</body>
 </html>
