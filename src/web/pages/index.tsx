@@ -140,7 +140,7 @@ function Index() {
               <div className="absolute -inset-4 bg-[#ff4d6d] rounded-3xl blur-2xl opacity-20 group-hover:opacity-40 transition duration-500"></div>
               <div className="relative w-48 h-48 md:w-64 md:h-64 rounded-3xl overflow-hidden border-8 border-white shadow-2xl rotate-2 group-hover:rotate-0 transition-transform duration-500">
                 <img 
-                  src="./2939ede1-9fcb-4e67-8890-119ae8854f8d.jpeg" 
+                  src="./3d2a3af2-1cc8-477d-a5a0-9b925831e64c.jpeg" 
                   alt="Wait what" 
                   className="w-full h-full object-cover"
                 />
