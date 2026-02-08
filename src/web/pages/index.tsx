@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 function Index() {
   const [isYes, setIsYes] = useState(false);
   const [noPosition, setNoPosition] = useState({ x: 0, y: 0 });
+  const [hasMoved, setHasMoved] = useState(false);
   const [noScale, setNoScale] = useState(1);
   const [yesScale, setYesScale] = useState(1);
   const [isClient, setIsClient] = useState(false);
   const noButtonRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsClient(true);
@@ -17,48 +19,41 @@ function Index() {
   const moveNoButton = useCallback(() => {
     if (!isClient || !noButtonRef.current) return;
     
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-    
     const btnRect = noButtonRef.current.getBoundingClientRect();
     const btnWidth = btnRect.width;
     const btnHeight = btnRect.height;
 
-    // Get the current translation to calculate the base position
-    const currentX = noPosition.x;
-    const currentY = noPosition.y;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
 
-    // Natural position of the element (where it would be with x=0, y=0)
-    const naturalX = btnRect.left - currentX;
-    const naturalY = btnRect.top - currentY;
+    const padding = 24;
+    const maxX = viewportWidth - btnWidth - padding;
+    const maxY = viewportHeight - btnHeight - padding;
 
-    // We want: 0 <= naturalX + nextX <= viewportWidth - btnWidth
-    // So: -naturalX <= nextX <= viewportWidth - btnWidth - naturalX
-    
-    const minX = -naturalX + 16; // 16px padding
-    const maxX = viewportWidth - btnWidth - naturalX - 16;
-    const minY = -naturalY + 16;
-    const maxY = viewportHeight - btnHeight - naturalY - 16;
+    // Calculate new random position within viewport
+    const randomX = Math.max(padding, Math.random() * maxX);
+    const randomY = Math.max(padding, Math.random() * maxY);
 
-    let randomX, randomY;
-    let distance = 0;
-    let attempts = 0;
-    
-    do {
-      randomX = minX + Math.random() * (maxX - minX);
-      randomY = minY + Math.random() * (maxY - minY);
-      distance = Math.sqrt(Math.pow(randomX - currentX, 2) + Math.pow(randomY - currentY, 2));
-      attempts++;
-    } while (distance < 150 && attempts < 20);
-    
-    setNoPosition({ x: randomX, y: randomY });
+    if (!hasMoved) {
+      // First move: capture current position to prevent jumping
+      setNoPosition({ x: btnRect.left, y: btnRect.top });
+      setHasMoved(true);
+      
+      // Delay the actual random jump to the next tick to allow the state change to take effect
+      // and let Framer Motion handle the transition from the captured position to the random one
+      setTimeout(() => {
+        setNoPosition({ x: randomX, y: randomY });
+      }, 0);
+    } else {
+      setNoPosition({ x: randomX, y: randomY });
+    }
     
     // Shrink "No" button slightly each time
-    setNoScale(prev => Math.max(prev * 0.9, 0.5));
+    setNoScale(prev => Math.max(prev * 0.85, 0.4));
     
     // Grow "Yes" button significantly each time "No" is interacted with
-    setYesScale(prev => Math.min(prev + 0.15, 3.5));
-  }, [isClient, noPosition]);
+    setYesScale(prev => Math.min(prev + 0.2, 4.0));
+  }, [isClient, hasMoved]);
 
   if (!isClient) return null;
 
@@ -138,28 +133,47 @@ function Index() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-12 min-h-[200px] relative w-full px-4">
               <motion.div
                 style={{ scale: yesScale }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                transition={{ type: "spring", stiffness: 400, damping: 25 }}
                 className="z-30"
               >
                 <Button
                   onClick={() => setIsYes(true)}
                   size="lg"
-                  className="h-auto bg-[#ff4d6d] hover:bg-[#ff758f] text-white px-16 py-8 text-4xl sm:text-5xl rounded-full shadow-[0_20px_50px_rgba(255,77,109,0.4)] transition-all font-montserrat font-black uppercase tracking-wider active:scale-90 border-none group"
+                  className="h-auto bg-[#ff4d6d] hover:bg-[#ff758f] text-white px-16 py-8 text-4xl sm:text-5xl rounded-full shadow-[0_20px_50px_rgba(255,77,109,0.4)] transition-all font-montserrat font-black uppercase tracking-wider active:scale-90 border-none group relative overflow-hidden"
                 >
-                  <span className="group-hover:scale-110 transition-transform inline-block mr-2">Да</span>💋
+                  <motion.span 
+                    className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"
+                  />
+                  <span className="relative z-10 group-hover:scale-110 transition-transform inline-block mr-2">Да</span>💋
                 </Button>
               </motion.div>
 
               <motion.div
                 ref={noButtonRef}
-                animate={{ 
+                style={hasMoved ? {
+                  position: 'fixed',
+                  left: 0,
+                  top: 0,
+                  x: noPosition.x,
+                  y: noPosition.y,
+                  margin: 0,
+                  zIndex: 50
+                } : {}}
+                animate={hasMoved ? { 
                   x: noPosition.x, 
                   y: noPosition.y, 
                   scale: noScale,
-                  rotate: noPosition.x / 10
+                  rotate: [0, -5, 5, 0]
+                } : {
+                  scale: noScale
                 }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className="z-20 sm:relative absolute"
+                transition={{ 
+                  type: "spring", 
+                  stiffness: 400, 
+                  damping: 30,
+                  rotate: { duration: 0.5, repeat: Infinity, repeatType: "reverse" }
+                }}
+                className="z-20 sm:relative"
               >
                 <Button
                   onClick={moveNoButton}
@@ -167,9 +181,9 @@ function Index() {
                   onPointerDown={moveNoButton}
                   variant="outline"
                   size="lg"
-                  className="h-auto border-4 border-[#ff4d6d] text-[#ff4d6d] bg-white/40 backdrop-blur-sm hover:bg-white px-10 py-6 text-2xl rounded-full shadow-lg transition-all font-montserrat font-bold whitespace-nowrap active:opacity-70"
+                  className="h-auto border-4 border-[#ff4d6d] text-[#ff4d6d] bg-white/60 backdrop-blur-md hover:bg-white px-10 py-6 text-2xl rounded-full shadow-xl transition-all font-montserrat font-bold whitespace-nowrap active:opacity-70 group"
                 >
-                  Нет🤔
+                  <span className="group-hover:rotate-12 transition-transform inline-block">Нет🤔</span>
                 </Button>
               </motion.div>
             </div>
@@ -194,10 +208,36 @@ function Index() {
               initial={{ y: 30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.4, type: "spring" }}
-              className="font-playfair text-[clamp(2rem,8vw,4.5rem)] font-bold text-[#ff4d6d] leading-tight max-w-4xl px-4"
+              className="font-playfair text-[clamp(2rem,8vw,4.5rem)] font-bold text-[#ff4d6d] leading-tight max-w-4xl px-4 drop-shadow-sm"
             >
               УРАА, Я ОЧЕНЬ СИЛЬНО ТЕБЯ ЛЮБЛЮ ❤️
             </motion.h1>
+
+            {/* Heart Explosion */}
+            <div className="absolute inset-0 pointer-events-none z-0">
+              {[...Array(30)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ x: "50%", y: "50%", scale: 0, opacity: 1 }}
+                  animate={{ 
+                    x: `${50 + (Math.random() - 0.5) * 150}%`,
+                    y: `${50 + (Math.random() - 0.5) * 150}%`,
+                    scale: [0, 1.5, 0],
+                    opacity: [1, 1, 0],
+                    rotate: Math.random() * 360
+                  }}
+                  transition={{ 
+                    duration: 2 + Math.random() * 2,
+                    delay: 0.5 + Math.random() * 0.5,
+                    repeat: Infinity,
+                    repeatDelay: Math.random() * 2
+                  }}
+                  className="absolute text-4xl"
+                >
+                  {["❤️", "💖", "💝", "💕", "💗"][i % 5]}
+                </motion.div>
+              ))}
+            </div>
 
             <motion.div
               initial={{ opacity: 0 }}
@@ -230,9 +270,10 @@ function Index() {
                   setYesScale(1);
                   setNoScale(1);
                   setNoPosition({ x: 0, y: 0 });
+                  setHasMoved(false);
                 }}
                 variant="ghost"
-                className="text-[#ff758f] hover:text-[#ff4d6d] hover:bg-transparent mt-8"
+                className="text-[#ff758f] hover:text-[#ff4d6d] hover:bg-transparent mt-8 font-montserrat font-semibold"
               >
                 Попробовать еще раз? ✨
               </Button>
